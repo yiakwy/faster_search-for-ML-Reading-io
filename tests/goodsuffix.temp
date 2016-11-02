@@ -1,0 +1,9 @@
+string to be matched:
+ abcdeyyhabchxxgabc
+begin:
+ habchxxgabc
+           ^
+        -
+        habchxxgabc
+                  ^
+       -

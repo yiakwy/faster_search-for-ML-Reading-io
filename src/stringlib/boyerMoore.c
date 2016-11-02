@@ -1,8 +1,8 @@
 //
-//  boyerMoore.cpp
+//  boyerMoore2.cpp
 //  boyerMoore
 //
-//  Created by Wang Yi on 30/10/16.
+//  Created by Wang Yi on 2/11/16.
 //  Copyright (c) 2016 Wang Yi. All rights reserved.
 //
 
@@ -43,10 +43,12 @@ fprintf(stderr, "%-*s====>[%s], %s():line %d.\n", \
 }\
 } while(0)
 
-#define ALGO_DEMO(no, pttn, pttn_len, fmt, ...) \
+#define ALGO_DEMO(no, back, pttn, pttn_len, fmt, ...) \
 printf(" %*s\n", (int)(no+1), pttn); \
 printf(" %*s" fmt, (int)(no), "", ## __VA_ARGS__);
 
+#define ALGO_cursor(no, back, pttn_len, fmt, ...) \
+printf(" %*s" fmt, (int)(no-(back)), "", ## __VA_ARGS__);
 // helper func
 // http://stackoverflow.com/questions/7411301/how-to-introduce-date-and-time-in-log-file
 char* getFormattedTime(void)
@@ -65,8 +67,6 @@ char* getFormattedTime(void)
 }
 
 
-
-
 #define FOR(START, END) \
 for (START=0; START < (int)(END); (START)++){
 #define FOR2(START, END, STEP) \
@@ -82,11 +82,11 @@ void init_RL1(int* rl_query_t, const char* pttn, int pttn_len) {
     int i;
     
     FOR(i, ALPHABET_LEN)
-        rl_query_t[i] = pttn_len;
+    rl_query_t[i] = pttn_len;
     END
     
     FOR(i, pttn_len - 1)
-        rl_query_t[pttn[i]] = pttn_len - 1 - i;
+    rl_query_t[pttn[i]] = pttn_len - 1 - i;
     END
 }
 
@@ -98,11 +98,11 @@ int is_prefix(const char* pttn, int pttn_len, int pos)
 {
     int suffix_len = pttn_len - pos;
     // http://www.gnu.org/software/libc/manual/html_node/String_002fArray-Comparison.html
-//    if (suffix_len == 0)
-//        return 1;
-//    else {
-        return memcmp(pttn, pttn+pos, suffix_len) == 0;
-//    }
+    //    if (suffix_len == 0)
+    //        return 1;
+    //    else {
+    return memcmp(pttn, pttn+pos, suffix_len) == 0;
+    //    }
 }
 
 /*
@@ -117,25 +117,25 @@ int suffix_len(const char* pttn, int pttn_len, int pos) {
 
 void init_RL2(int* rl_query_t, const char* pttn, int pttn_len){
     // i is the position right to the place where a mismtach occurs.
-    int i, step=pttn_len;
+    int i, loc=pttn_len-1;
     
     // case 1: no plausible mtch
     FOR_DESC(i, pttn_len)
-        if (is_prefix(pttn, pttn_len, i))
-            step = i; // update the step
-        // store the val in the first place they are not equal
-        rl_query_t[i-1] = step + pttn_len - i; // move the pinter to the right end of the P
+    if (is_prefix(pttn, pttn_len, i))
+        loc = i; // update the step
+    // store the val in the first place they are not equal
+    rl_query_t[i-1] = loc + pttn_len - i; // move the pinter to the right end of the P
     END
     rl_query_t[pttn_len-1] = 0;
     
     // case 2: exist a plausible mtch
     FOR(i, pttn_len)
-        int s = suffix_len(pttn, pttn_len, i);
-        // satisfying the condition
-        if (pttn[i-s] != pttn[pttn_len -1 - s])
-            rl_query_t[pttn_len-s] = pttn_len - 1 - i + s;//
+    int s = suffix_len(pttn, pttn_len, i);
+    // satisfying the condition
+    if (pttn[i-s] != pttn[pttn_len -1 - s])
+        rl_query_t[pttn_len-1-s] = pttn_len - 1 - i + s;//
     END
-
+    
 }
 
 size_t boyer_moore(const char* txt, size_t l, const char* pttn, size_t pttn_len){
@@ -153,17 +153,19 @@ size_t boyer_moore(const char* txt, size_t l, const char* pttn, size_t pttn_len)
     init_RL2(rl2_t, pttn, pttn_len);
     
     printf("string to be matched:\n %s\n", txt);
-    printf("begin:\n %s\n %+*s\n", pttn, pttn_len, "^");
+    printf("begin:\n %s\n %*s\n", pttn, pttn_len, "^");
     
     while (i < l) {
         j = pttn_len - 1;
         while (j >=0 && (txt[i] == pttn[j])){i--;j--;}
+        ALGO_cursor(i, 0, pttn_len, "-")
+        printf("\n");
         if (j < 0){
             free(rl2_t);
             return i;
         }
-        i += MAX(rl1_t[txt[i]], rl2_t[j]);
-        ALGO_DEMO(i, pttn, pttn_len, "^")
+        i += (j == pttn_len-1) ? rl1_t[txt[i]]: rl2_t[j];
+        ALGO_DEMO(i, pttn_len - 1 - j, pttn, pttn_len, "^")
         printf("\n");
     }
     free(rl2_t);
