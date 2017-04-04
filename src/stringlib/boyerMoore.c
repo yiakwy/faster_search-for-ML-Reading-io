@@ -162,7 +162,7 @@ size_t boyer_moore(const char* txt, size_t l, const char* pttn, size_t pttn_len)
         printf("\n");
         if (j < 0){
             free(rl2_t);
-            return i;
+            return i+1;
         }
         i += (j == pttn_len-1) ? rl1_t[txt[i]]: rl2_t[j];
         ALGO_DEMO(i, pttn_len - 1 - j, pttn, pttn_len, "^")
